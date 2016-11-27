@@ -15,7 +15,7 @@ var uuid = require('node-uuid');
 var request = require('request');
 var _ = require('underscore');
 var logger = require('winston');
-var socket = require('socket.io-client')('http://127.0.0.1:8080');
+var socket = require('socket.io-client')('http://0.0.0.0:8080');
 try {
   var CREDENTIALS = require('./credentials.json');
 } catch (e) {
@@ -292,9 +292,11 @@ function sessionComplete(job, finish) {
         //     sess[key].finalPath = `${__dirname}/${sess[key].finalPath}`;
         //   }
         // }
-        // if (argv.share) {
-        // //socialPublisher.share(sess);
-        // }
+
+//        if (argv.share) {
+//          socialPublisher.share(sess);
+//        }
+
         // sessionIsComplete = false;
       } else {
         console.log('NOT ALL IMAGES HAVE BEEN PROCESSED!');
@@ -622,11 +624,11 @@ function processFinalImages(sess) {
       runPhantomPhotoStrip(childArgs);
     }
 
-    // if (argv.share) {
-    //   socialPublisher.share(sess);
-    // } else {
+    if (argv.share) {
+       socialPublisher.share(sess);
+    } //else {
     saveSession(sess);
-    // }
+    //}
     // sessionIsComplete = false;
   } else {
     console.log(`images processed ${done} / ${count}`);
@@ -723,7 +725,7 @@ process.on('uncaughtException', function(err) {
   logger.error(err);
 });
 
-kue.app.listen(config.port);
+kue.app.listen(config.port, "0.0.0.0");
 logger.info(sprintf('Kue admin started on port %s', config.port));
 
 
