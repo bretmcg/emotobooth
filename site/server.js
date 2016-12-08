@@ -83,7 +83,7 @@ client.hkeys("image-data", function (err, replies) {
 });
 
 if (CREDENTIALS) {
-  let socialPublisher = new SocialPublisher.SocialPublisher(CREDENTIALS, saveSession);
+  var socialPublisher = new SocialPublisher.SocialPublisher(CREDENTIALS, saveSession);
 }
 
 // Define job mapping
