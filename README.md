@@ -42,11 +42,11 @@ vagrant ssh
 cd /vagrant/site
 npm uninstall phantomjs-prebuilt
 npm install phantomjs-prebuilt --no-bin-links
-node server.js
+node server.js [--share] [--auth]
 ```
 * Load the [panel](http://localhost:8080) and [grid](http://localhost:8080?showgrid) front end pages (as seen above)
 
-##Sessions
+## Sessions
 
 Photos can be grouped together in sessions. To send photos to the front end and/or share them socially, follow these steps.
 
@@ -55,7 +55,13 @@ Photos can be grouped together in sessions. To send photos to the front end and/
 3. Watch the [panel](http://localhost:8080) and [grid](http://localhost:8080?showgrid) pages to see the output.
 4. If you set up social sharing (see below), these sessions will be saved at this point.
 
-## Optional Social Sharing
+## Authentication (optional)
+
+Optionally you can require authentication for the UI/rendering pages.
+1. Add the `auth` flag when running the server, i.e. `node server.js --auth`.
+2. Set the required username/password in `config.js`.
+
+## Social Sharing (optional)
 
 This experience can post to [Twitter](https://twitter.com/GCPEmotobooth/status/733065931027423232) and [Github](https://gist.github.com/GCPEmotobooth/2c36647dc2fba279aa250d12ce8cb472), letting users easily share their photos.
 

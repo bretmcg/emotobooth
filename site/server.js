@@ -32,6 +32,11 @@ var socketIO = require('socket.io');
 var phantomjs = require('phantomjs-prebuilt')
 var phantomBinPath = phantomjs.path;
 var dontPrint = false;
+var passport = require('passport')
+  , LocalStrategy = require('passport-local').Strategy;
+var expressSession = require('express-session');
+var cookieParser = require('cookie-parser');
+var bodyParser = require('body-parser');
 
 logger.level = 'debug';
 
@@ -56,6 +61,43 @@ config.outDir = argv.w || argv.watch || config.outDir || 'out/';
 var app = express();
 var server = http.Server(app);
 var io = socketIO(server);
+
+// parse application/x-www-form-urlencoded
+app.use(cookieParser());
+app.use(bodyParser.urlencoded({ extended: false }));
+
+// Enable authentication.
+app.use(expressSession({ secret: 'keyboard cat' }));
+app.use(passport.initialize());
+app.use(passport.session());
+
+passport.serializeUser(function(user, done) {
+  done(null, user.id);
+});
+
+passport.deserializeUser(function(user, done) {
+  done(null, user);
+});
+
+passport.use(new LocalStrategy(
+  function(username, password, done) {
+    let user = {
+      username,
+      password,
+      id: 1
+    };
+    console.log('Validating viewer credentials...');
+    if (user.username != config.auth_username) {
+      console.warn('Incorrect username: ' + username);
+      return done(null, false, { message: 'Incorrect username.' });
+    }
+    if (config.auth_password !== user.password  ) {
+      console.warn('Incorrect password: ' + user.password);
+      return done(null, false, { message: 'Incorrect password.' });
+    }
+    return done(null, user);
+  }
+));
 
 // If the folder doesn't exist, create it
 var checkDirs = [config.inDir, config.outDir, config.printDir, config.photostripDir];
@@ -728,37 +770,73 @@ process.on('uncaughtException', function(err) {
 kue.app.listen(config.port, "0.0.0.0");
 logger.info(sprintf('Kue admin started on port %s', config.port));
 
-
-
-
-
-
-
-
 // Images statically linked
 app.use('/images', express.static(config.outDir));
 
-app.get('/', (req, res) => {
+logger.info(sprintf('Auth required for rendered UI: %s', argv.auth));
+
+var authMiddleware = function(req, res, next) {
+  let requiresAuth = argv.auth;
+  if (!requiresAuth) {
+    return next();
+  }
+  if (!req.session.is_authenticated) {
+    // On login, redirect to this original page.
+    req.session.redirect_to = req.path;
+    res.redirect('/login');
+    return;
+  }
+  return next();
+};
+
+app.get('/', authMiddleware, (req, res) => {
   res.sendFile(__dirname + '/build/index.html');
 });
 
-app.get('/single', (req, res) => {
+app.get('/single', authMiddleware, (req, res) => {
   res.sendFile(__dirname + '/build/single.html');
 });
 
-app.get('/buttons', (req, res) => {
+app.get('/login',
+   (req, res) => {
+    res.sendFile(__dirname + '/build/login.html');
+  }
+);
+
+app.get('/logout',
+   (req, res) => {
+    console.log('Logging out...');
+    req.session.is_authenticated = false;
+    res.redirect('/');
+  }
+);
+
+app.post('/login',
+  passport.authenticate('local'),
+  function(req, res) {
+    // If this function gets called, authentication was successful.
+    // `req.user` contains the authenticated user.
+    req.session.is_authenticated = true;
+    if (!req.session.redirect_to) {
+      res.redirect('/');
+    }
+    console.log('Login and redirect to ' + req.session.redirect_to);
+    res.redirect(req.session.redirect_to);
+  });
+
+app.get('/buttons', authMiddleware, (req, res) => {
   res.sendFile(__dirname + '/build/buttons.html');
 });
 
-app.get('/history', (req, res) => {
+app.get('/history', authMiddleware, (req, res) => {
   res.sendFile(__dirname + '/build/history.html');
 });
 
-app.get('/directory', (req, res) => {
+app.get('/directory', authMiddleware, (req, res) => {
   res.sendFile(__dirname + '/build/directory.html');
 });
 
-app.get('/history-data', (req, res) => {
+app.get('/history-data', authMiddleware, (req, res) => {
   client.hkeys("image-data", function (err, replies) {
     if (replies.length) {
 
@@ -784,7 +862,7 @@ app.get('/history-data', (req, res) => {
   });
 });
 
-app.get('/delete-session/:id', (req, res) => {
+app.get('/delete-session/:id', authMiddleware, (req, res) => {
   client.hget('image-data', req.params.id, (e, r) => {
     var data = JSON.parse(r);
     data.deleted = true;

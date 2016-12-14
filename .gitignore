@@ -9,6 +9,7 @@ site/in-test
 site/out-photostrips
 site/out-print
 site/out
+.vscode/
 deploy/.vagrant
 src/node_modules
 CaptureOne/

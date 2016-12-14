@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link href='/auxiliary.css' rel='stylesheet' type='text/css'>
+    <title>Emoto Booth: Login</title>
+    <script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
+    <link href="/auxiliary.css" rel="stylesheet" type="text/css" />
+    <style type="text/css">
+      input {
+        height: 2em;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Emotobooth login</h1>
+    <form action="/login" method="POST">
+      <input type="text" id="username" name="username" value="" />
+      <input type="password" name="password" id="password" value="" />
+      <input type="submit" class="button" value="Login" />
+    </form>
+  </body>
+</html>
