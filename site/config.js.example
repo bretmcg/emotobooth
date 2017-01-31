@@ -7,12 +7,15 @@ not to your actual computer's filesystem.
 var config = {};
 
 config.inDir = 'in/';
+config.uploadDir = 'upload/';
 config.outDir = 'out/';
 config.printDir = 'out-print/';
 config.photostripDir = 'out-photostrips/';
 config.processing_port = 8081;
 config.display_port = 8080;
 config.api_key = '';
+config.auth_username = 'user';
+config.auth_password = 'pass123';
 
 module.exports = config;
 
