@@ -37,6 +37,7 @@ var passport = require('passport')
 var expressSession = require('express-session');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
+var multer  = require('multer')
 
 logger.level = 'debug';
 
@@ -57,10 +58,21 @@ config.port = argv.p || argv.port || config.port || 8081;
 config.displayPort = argv.displayp || argv.displayport || config.display_port || 8080;
 config.inDir = argv.w || argv.watch || config.inDir || 'in/';
 config.outDir = argv.w || argv.watch || config.outDir || 'out/';
+config.uploadDir = argv.w || argv.watch || config.uploadDir || 'upload/';
 
 var app = express();
 var server = http.Server(app);
 var io = socketIO(server);
+
+var storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, 'upload/');
+  },
+  filename: function (req, file, cb) {
+    cb(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname));
+  }
+})
+var upload = multer({ storage: storage });
 
 // parse application/x-www-form-urlencoded
 app.use(cookieParser());
@@ -100,7 +112,7 @@ passport.use(new LocalStrategy(
 ));
 
 // If the folder doesn't exist, create it
-var checkDirs = [config.inDir, config.outDir, config.printDir, config.photostripDir];
+var checkDirs = [config.inDir, config.outDir, config.printDir, config.photostripDir, config.uploadDir];
 checkDirs.forEach((dir) => {
   if (!fs.existsSync(dir)){
     fs.mkdirSync(dir);
@@ -808,6 +820,24 @@ app.get('/logout',
     console.log('Logging out...');
     req.session.is_authenticated = false;
     res.redirect('/');
+  }
+);
+
+// Hard-coded requirement for /photo POST requests to use auth.
+app.post('/photo',
+  upload.single('photo'),
+  (req, res, next) => {
+    if (!req.body.username || !req.body.password
+      || req.body.username != config.auth_username
+      || req.body.password != config.auth_password) {
+        res.status(403).send('Invalid credentials.');
+        return;
+      }
+
+    // Successful auth, copy from upload tmp dir to in/ for processing
+    fs.createReadStream(req.file.path).pipe(fs.createWriteStream(config.inDir + req.file.filename));
+    console.log('Photo POST...');
+    res.status(200).send('OK, photo received.');
   }
 );
 

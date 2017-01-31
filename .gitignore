@@ -5,6 +5,7 @@ site/testImage.jpg
 node_modules
 site/config.js
 site/in
+site/upload
 site/in-test
 site/out-photostrips
 site/out-print
