@@ -687,7 +687,7 @@ function processFinalImages(sess) {
   } else {
     console.log(`images processed ${done} / ${count}`);
     var out = path.join(config.outDir, sprintf('%s-final.jpg', sess[incompleteSession].id));
-    sess[incompleteSession].finalPathChrome = out;
+    sess[incompleteSession].finalPathChrome = path.resolve(out);
 
     var outChromeless = path.join(config.outDir, sprintf('%s-final-chromeless.jpg', sess[incompleteSession].id));
     sess[incompleteSession].finalPath = outChromeless;
